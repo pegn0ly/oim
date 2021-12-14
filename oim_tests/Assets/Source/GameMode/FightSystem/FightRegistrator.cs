@@ -109,6 +109,7 @@ namespace OIMFight
         private void NewTurnRegistered(object obj)
         {
             FightSavedCondition RegisteredTurn = JsonUtility.FromJson<FightSavedCondition>(obj.ToString());
+            Debug.Log("Turn " + RegisteredTurn.Turn.ToString() + " registered in fight " + RegisteredTurn.FightID.ToString());
             TurnRegistered(RegisteredTurn);
         }
         private void UpdateFightCondition(FightSavedCondition condition)

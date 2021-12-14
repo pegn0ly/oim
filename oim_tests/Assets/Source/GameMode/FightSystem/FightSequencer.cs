@@ -1,7 +1,5 @@
 using UnityEngine;
 
-// FightSequencer отвечает за смену фаз боя.
-
 namespace OIMFight
 {
     public enum FightStage
@@ -13,13 +11,20 @@ namespace OIMFight
         COMPLETED = 4
     }
 
+    // класс, отвечающий за смену фаз боя
+    // Поля:
+    // - Fight - ссылка на бой, частью которого является данный класс
+    // - Stage - текущая фаза боя
+    // - bCanStart - готов ли бой стартовать(в данный момент используется для проверки, выставлен ли хоть 1 юнит на поле, хочу поменять)
+
+    // Ивенты:
+    // - OnFightStageGhanged - вызывается при смене фазы боя, передается фаза, в которую перешел бой
     public class FightSequencer : MonoBehaviour
     {
-        // ссылка на бой, частью которого является данный класс
         private Fight Fight;
         private FightStage Stage;
-
-        // делегаты
+        private bool bCanStart = false;
+        
         public delegate void OnFightStageGhangedDelegate(FightProps props);
         public static event OnFightStageGhangedDelegate OnFightStageGhanged;
 
@@ -28,12 +33,13 @@ namespace OIMFight
             Fight = (Fight)gameObject.GetComponent(typeof(Fight));
             //
             Fight.FightReadyToStart += StartPreparation;
-            OnFightStageGhanged += FigthStageChangeAnnounce;
+            UnitDisplacer.UnitPlaced += FightCanStart;
+            OnFightStageGhanged += FightStageChangeAnnounce;
         }
     
         private void Update() 
         {
-            if(Input.GetKeyDown(KeyCode.F) && Stage == FightStage.PREPARE)
+            if(Input.GetKeyDown(KeyCode.F) && bCanStart)
             {
                 SetFightStage(FightStage.IN_PROGRESS);
             }
@@ -53,7 +59,7 @@ namespace OIMFight
             }
         }
 
-        private void FigthStageChangeAnnounce(FightProps props)
+        private void FightStageChangeAnnounce(FightProps props)
         {
             Debug.Log("Fight " + props.Id + " stage changed to " + props.Stage.ToString());
         }
@@ -64,6 +70,16 @@ namespace OIMFight
         {
             Fight.FightReadyToStart -= StartPreparation;
             SetFightStage(FightStage.PREPARE);
+        }
+
+        // при постановке хотя бы одного юнита на поле бой можно начинать
+        private void FightCanStart(PlaceResult result)
+        {
+            if(Stage == FightStage.PREPARE && !bCanStart)
+            {
+                UnitDisplacer.UnitPlaced -= FightCanStart;
+                bCanStart = true;
+            }
         }
     }
 }
